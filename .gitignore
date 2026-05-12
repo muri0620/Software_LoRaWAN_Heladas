@@ -1,0 +1,118 @@
+# =====================================================================
+# .gitignore - Software_LoRaWAN_Heladas
+# Sistema IoT/LoRaWAN para monitoreo y alertas de heladas en cultivos
+# =====================================================================
+
+# ----- Secretos y credenciales -----
+.env
+.env.*
+!.env.example
+*.env
+secrets/
+credentials/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+auth.json
+config.private.*
+
+# ----- Arduino / PlatformIO / ESP32 -----
+build/
+.pio/
+.pioenvs/
+.piolibdeps/
+*.bin
+*.elf
+*.hex
+*.map
+*.d
+*.o
+*.obj
+*.lst
+*.ino.cpp
+.vscode/arduino.json
+.vscode/c_cpp_properties.json
+
+# ----- Node.js -----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.yarn-integrity
+package-lock.json.bak
+
+# ----- Node-RED (datos en runtime) -----
+deployment/docker/nodered/data/
+**/.node-red/.config.*.json
+**/.node-red/.sessions.json
+**/.node-red/lib/
+**/.node-red/node_modules/
+**/.node-red/projects/.git/
+
+# ----- Docker -----
+docker-compose.override.yml
+**/influxdb-data/
+**/grafana-data/
+**/nodered-data/
+*.log
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# ----- Sistemas operativos -----
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ----- IDEs y editores -----
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.vs/
+
+# ----- Logs y temporales -----
+*.log
+*.log.*
+logs/
+tmp/
+temp/
+.cache/
+
+# ----- Backups y empaquetados pesados -----
+*.bak
+*.backup
+*.old
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ----- Diagramas y exports binarios pesados (whitelist en /docs/imagenes) -----
+*.psd
+*.ai
+# Mantener: pequeños .png/.jpg en docs/imagenes/
+
+# ----- Misc -----
+*.orig
+.history/
+.local/
