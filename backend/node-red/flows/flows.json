@@ -1,0 +1,573 @@
+[
+    {
+        "id": "09334837b5d4810d",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": true,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "164dbdb4a080ad87",
+        "type": "mqtt in",
+        "z": "09334837b5d4810d",
+        "name": "",
+        "topic": "v3/wsnudfjdc@lorawsnudfjdc/devices/+/up",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "513fa79d43691ae0",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 220,
+        "y": 60,
+        "wires": [
+            [
+                "8dd381ddd8f5e39f",
+                "0dd49c551ed7a0ce",
+                "3b4ec8f9d3fb2ab5"
+            ]
+        ]
+    },
+    {
+        "id": "ca145dbe4e5d34eb",
+        "type": "debug",
+        "z": "09334837b5d4810d",
+        "name": "datos normalizados",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "8dd381ddd8f5e39f",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "name": "normalizar datos",
+        "func": "msg.payload = {\n    Device_id: msg.payload.end_device_ids.device_id,\n    Temperatura: msg.payload.uplink_message.decoded_payload.temperature,\n    Humedad: msg.payload.uplink_message.decoded_payload.humidity,\n    Bateria: msg.payload.uplink_message.decoded_payload.battery,\n    Viento: msg.payload.uplink_message.decoded_payload.wind_speed,\n    Paquete: msg.payload.uplink_message.decoded_payload.packet,\n    timestamp: msg.payload.received_at\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 420,
+        "wires": [
+            [
+                "ca145dbe4e5d34eb",
+                "4a012a68f32490d0",
+                "7882655ac9c3f19f",
+                "0f8d33d36c455a3f",
+                "3712de5a40384992",
+                "5fb7228965a6baac"
+            ]
+        ]
+    },
+    {
+        "id": "c919225ceb14ea62",
+        "type": "ui_chart",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "",
+        "group": "8e5ac0358240d325",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "temperatura",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": true,
+        "ymin": "15",
+        "ymax": "25",
+        "removeOlder": "5",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 990,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4a012a68f32490d0",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "extraer_temp",
+        "func": "msg.topic = msg.payload.device_id;\nmsg.payload = msg.payload.temperatura;\nreturn msg;\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 560,
+        "wires": [
+            [
+                "c919225ceb14ea62"
+            ]
+        ]
+    },
+    {
+        "id": "5edac8f937814c35",
+        "type": "ui_chart",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "",
+        "group": "8e5ac0358240d325",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "label": "humedad",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": true,
+        "ymin": "70",
+        "ymax": "90",
+        "removeOlder": "2",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#df6e0c",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 980,
+        "y": 640,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7882655ac9c3f19f",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "extraer_hum",
+        "func": "msg.topic = msg.payload.device_id;\nmsg.payload = msg.payload.humedad;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 640,
+        "wires": [
+            [
+                "5edac8f937814c35"
+            ]
+        ]
+    },
+    {
+        "id": "3db542efbfe249c7",
+        "type": "ui_chart",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "",
+        "group": "8e5ac0358240d325",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "label": "vbat",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": true,
+        "ymin": "3.1",
+        "ymax": "4",
+        "removeOlder": "2",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#21c021",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 970,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0f8d33d36c455a3f",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "extraer_bat",
+        "func": "msg.topic = msg.payload.device_id;\nmsg.payload = msg.payload.bateria;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 720,
+        "wires": [
+            [
+                "3db542efbfe249c7"
+            ]
+        ]
+    },
+    {
+        "id": "d1c8df4e37849bc4",
+        "type": "ui_chart",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "",
+        "group": "8e5ac0358240d325",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "label": "viento",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": true,
+        "ymin": "0",
+        "ymax": "3",
+        "removeOlder": "2",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#1dd71d",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 970,
+        "y": 800,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3712de5a40384992",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "extraer_viento",
+        "func": "msg.topic = msg.payload.device_id;\nmsg.payload = msg.payload.viento;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 800,
+        "wires": [
+            [
+                "d1c8df4e37849bc4"
+            ]
+        ]
+    },
+    {
+        "id": "8e79f8f55418656e",
+        "type": "debug",
+        "z": "09334837b5d4810d",
+        "name": "data influxdb",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "0dd49c551ed7a0ce",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "uplinktoinfluxdbout",
+        "func": "// Verificar uplink válido\nif (\n    !msg.payload ||\n    !msg.payload.uplink_message ||\n    !msg.payload.uplink_message.decoded_payload\n) {\n    return null;\n}\n\nconst decoded = msg.payload.uplink_message.decoded_payload;\nconst deviceId = msg.payload.end_device_ids.device_id;\n\n// Measurement dinámico por nodo\nmsg.measurement = deviceId;\n\n// Construimos payload base\nlet payload = {\n    Temperatura: Number(decoded.temperature ?? decoded.Temperatura),\n    Humedad: Number(decoded.humidity ?? decoded.Humedad),\n    Bateria: Number(decoded.battery ?? decoded.bateria),\n    Paquete: Number(decoded.packet ?? decoded.paquete)\n};\n\n// ✅ Solo agregar viento si es el nodo 2\nif (deviceId === \"nodo-lora-ud-2\" && decoded.wind_speed !== undefined) {\n    payload.Viento = Number(decoded.wind_speed);\n}\n\nmsg.payload = payload;\n\nreturn msg;\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 60,
+        "wires": [
+            [
+                "8e79f8f55418656e",
+                "4438542c6f0782cd"
+            ]
+        ]
+    },
+    {
+        "id": "4438542c6f0782cd",
+        "type": "influxdb out",
+        "z": "09334837b5d4810d",
+        "influxdb": "fcc7a5468c9ddabf",
+        "name": "",
+        "measurement": "",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "LoRaWAN_UD",
+        "bucket": "wsn_bucket",
+        "x": 870,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "5fb7228965a6baac",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "d": true,
+        "name": "Evaluar condición de helada",
+        "func": "const d = msg.payload;\n\n// Validar existencia y que sean números válidos\nif (\n    typeof d.Temperatura !== \"number\" ||\n    typeof d.Humedad !== \"number\" ||\n    typeof d.Viento !== \"number\"\n) {\n    return null;\n}\n\n// Ahora sí evaluar condición\nif (d.Temperatura <= 2 && d.Humedad <= 50 && d.Viento <= 5) {\n\n    msg.text = `🚨 ALERTA DE HELADA 🚨\nNodo: ${d.Device_id}\nTemperatura: ${d.Temperatura} °C\nHumedad: ${d.Humedad} %\nViento: ${d.Viento} m/s\n${new Date().toLocaleString(\"es-CO\")}`;\n\n    return msg;\n}\n\nreturn null;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 800,
+        "y": 280,
+        "wires": [
+            [
+                "3174a37c1da3fe54",
+                "a18df547752d73b5"
+            ]
+        ]
+    },
+    {
+        "id": "a18df547752d73b5",
+        "type": "debug",
+        "z": "09334837b5d4810d",
+        "name": "Alerta detectada",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "text",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1100,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "3174a37c1da3fe54",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "name": "Twilio config",
+        "func": "// Validar datos\nconst d = msg.payload;\n\nif (\n    typeof d.Temperatura !== \"number\" ||\n    typeof d.Humedad !== \"number\" ||\n    typeof d.Viento !== \"number\"\n) {\n    return null;\n}\n\n// Fecha Colombia\nconst fecha = new Date().toLocaleString(\"es-CO\", {\n    timeZone: \"America/Bogota\"\n});\n\n// Construir mensaje WhatsApp\nconst alertMessage = `*ALERTA DE HELADA*\n\n *Temperatura:* ${d.Temperatura.toFixed(1)} °C\n *Humedad:* ${d.Humedad.toFixed(1)} %\n *Viento:* ${d.Viento.toFixed(1)} m/s\n\n Nodo: ${d.Device_id}\n ${fecha}\n\n⚠ Alta probabilidad de helada.\nSe recomienda encender aspersores.`;\n\n// ===== CONFIGURACIÓN TWILIO =====\nconst accountSid = \"tu_sid\";\nconst authToken = \"tu_token\";\n\nmsg.url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;\n\nmsg.headers = {\n    \"Content-Type\": \"application/x-www-form-urlencoded\",\n    \"Authorization\": \"Basic \" + Buffer.from(accountSid + \":\" + authToken).toString(\"base64\")\n};\n\nmsg.method = \"POST\";\n\n// Datos del mensaje\nconst messageData = {\n    \"Body\": alertMessage,\n    \"From\": \"whatsapp:+14155238886\",      // Sandbox Twilio\n    \"To\": \"whatsapp:+57\"        // Tu número\n};\n\n// Convertir a form-urlencoded\nlet formData = '';\nfor (const key in messageData) {\n    if (formData.length) formData += '&';\n    formData += encodeURIComponent(key) + '=' + encodeURIComponent(messageData[key]);\n}\n\nmsg.payload = formData;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1110,
+        "y": 200,
+        "wires": [
+            [
+                "d9266515767cbf9b"
+            ]
+        ]
+    },
+    {
+        "id": "d9266515767cbf9b",
+        "type": "http request",
+        "z": "09334837b5d4810d",
+        "name": "",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1270,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3b4ec8f9d3fb2ab5",
+        "type": "function",
+        "z": "09334837b5d4810d",
+        "name": "uplinktoinfluxdbout+power",
+        "func": "// Verificar uplink válido\nif (\n    !msg.payload ||\n    !msg.payload.uplink_message ||\n    !msg.payload.uplink_message.decoded_payload\n) {\n    return null;\n}\n\nconst decoded = msg.payload.uplink_message.decoded_payload;\nconst deviceId = msg.payload.end_device_ids.device_id;\n\n// Obtener RSSI y SNR\nlet rssi = null;\nlet snr = null;\n\nif (\n    msg.payload.uplink_message.rx_metadata &&\n    msg.payload.uplink_message.rx_metadata.length > 0\n) {\n    rssi = msg.payload.uplink_message.rx_metadata[0].rssi;\n    snr = msg.payload.uplink_message.rx_metadata[0].snr;\n}\n\n// Measurement dinámico por nodo\nmsg.measurement = deviceId;\n\n// Copiar TODAS las variables del payload decodificado\nlet payload = {};\n\nfor (let key in decoded) {\n    payload[key] = Number(decoded[key]);\n}\n\n// Agregar RSSI y SNR\npayload.RSSI = Number(rssi);\npayload.SNR = Number(snr);\n\n// Enviar a InfluxDB\nmsg.payload = payload;\n\n// Mostrar TODO en debug\nnode.warn({\n    device: deviceId,\n    ...payload\n});\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 100,
+        "wires": [
+            [
+                "8e79f8f55418656e",
+                "4438542c6f0782cd"
+            ]
+        ]
+    },
+    {
+        "id": "513fa79d43691ae0",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "nam1.cloud.thethings.industries",
+        "port": "8883",
+        "tls": "",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": true,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "8e5ac0358240d325",
+        "type": "ui_group",
+        "name": "Ambiente",
+        "tab": "fc4799dc06ba76eb",
+        "order": 1,
+        "disp": true,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "fcc7a5468c9ddabf",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "wsn_bucket",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "http://host.docker.internal:8086",
+        "timeout": 10,
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "fc4799dc06ba76eb",
+        "type": "ui_tab",
+        "name": "wsn-heladas",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "327b982b5905bd5d",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-contrib-influxdb": "0.7.0"
+        }
+    }
+]

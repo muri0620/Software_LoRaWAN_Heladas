@@ -1,0 +1,11 @@
+msg.payload = {
+    Device_id: msg.payload.end_device_ids.device_id,
+    Temperatura: msg.payload.uplink_message.decoded_payload.temperature,
+    Humedad: msg.payload.uplink_message.decoded_payload.humidity,
+    Bateria: msg.payload.uplink_message.decoded_payload.battery,
+    Viento: msg.payload.uplink_message.decoded_payload.wind_speed,
+    Paquete: msg.payload.uplink_message.decoded_payload.packet,
+    timestamp: msg.payload.received_at
+};
+
+return msg;

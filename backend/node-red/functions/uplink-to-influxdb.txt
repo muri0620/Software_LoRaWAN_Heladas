@@ -1,0 +1,31 @@
+// Verificar uplink válido
+if (
+    !msg.payload ||
+    !msg.payload.uplink_message ||
+    !msg.payload.uplink_message.decoded_payload
+) {
+    return null;
+}
+
+const decoded = msg.payload.uplink_message.decoded_payload;
+const deviceId = msg.payload.end_device_ids.device_id;
+
+// Measurement dinámico por nodo
+msg.measurement = deviceId;
+
+// Construimos payload base
+let payload = {
+    Temperatura: Number(decoded.temperature ?? decoded.Temperatura),
+    Humedad: Number(decoded.humidity ?? decoded.Humedad),
+    Bateria: Number(decoded.battery ?? decoded.bateria),
+    Paquete: Number(decoded.packet ?? decoded.paquete)
+};
+
+// viento solo si es el nodo 2
+if (deviceId === "nodo-lora-ud-2" && decoded.wind_speed !== undefined) {
+    payload.Viento = Number(decoded.wind_speed);
+}
+
+msg.payload = payload;
+
+return msg;

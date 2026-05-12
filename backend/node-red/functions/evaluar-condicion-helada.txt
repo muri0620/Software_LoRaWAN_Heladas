@@ -1,0 +1,25 @@
+const d = msg.payload;
+
+// Validar existencia y que sean números válidos
+if (
+    typeof d.Temperatura !== "number" ||
+    typeof d.Humedad !== "number" ||
+    typeof d.Viento !== "number"
+) {
+    return null;
+}
+
+// Ahora sí evaluar condición
+if (d.Temperatura <= 2 && d.Humedad <= 50 && d.Viento <= 5) {
+
+    msg.text = ` ALERTA DE HELADA 
+Nodo: ${d.Device_id}
+Temperatura: ${d.Temperatura} °C
+Humedad: ${d.Humedad} %
+Viento: ${d.Viento} m/s
+${new Date().toLocaleString("es-CO")}`;
+
+    return msg;
+}
+
+return null;
