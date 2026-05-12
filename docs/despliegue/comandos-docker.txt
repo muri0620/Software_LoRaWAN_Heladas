@@ -1,0 +1,68 @@
+COMANDOS DOCKER - SISTEMA IOT LORAWAN HELADAS
+
+1. INICIO DEL SISTEMA
+docker compose up -d
+Inicia todos los contenedores definidos en docker-compose.yml en segundo plano.
+
+2. DETENER EL SISTEMA
+docker compose down
+Detiene y elimina los contenedores, redes y recursos creados.
+
+3. REINICIAR CONTENEDORES
+docker compose restart
+Reinicia todos los servicios sin eliminarlos.
+
+4. VER ESTADO DE CONTENEDORES
+docker compose ps
+Muestra los contenedores activos y su estado.
+
+5. VER LOGS GENERALES
+docker compose logs -f
+Muestra los logs en tiempo real de todos los contenedores.
+
+6. VER LOGS DE UN CONTENEDOR ESPECÍFICO
+docker compose logs -f nodered
+docker compose logs -f influxdb
+docker compose logs -f grafana
+Permite monitorear el comportamiento de cada servicio.
+
+7. CONSTRUIR CONTENEDORES (SI HAY CAMBIOS)
+docker compose up -d --build
+Reconstruye las imágenes y levanta los servicios.
+
+8. DETENER UN CONTENEDOR ESPECÍFICO
+docker compose stop nodered
+Detiene solo el servicio indicado.
+
+9. INICIAR UN CONTENEDOR DETENIDO
+docker compose start nodered
+Inicia un contenedor previamente detenido.
+
+10. ELIMINAR CONTENEDORES (SIN BORRAR VOLUMENES)
+docker compose rm -f
+Elimina contenedores detenidos.
+
+11. ACCEDER A UN CONTENEDOR (MODO INTERACTIVO)
+docker exec -it nodered /bin/bash
+docker exec -it influxdb /bin/bash
+docker exec -it grafana /bin/bash
+Permite ejecutar comandos dentro del contenedor.
+
+12. VER USO DE RECURSOS
+docker stats
+Muestra consumo de CPU, memoria y red de los contenedores.
+
+------------------------------------------------------------
+FUNCION DE LOS CONTENEDORES
+
+NODERED:
+Procesa los datos recibidos desde TTN mediante MQTT, ejecuta lógica de negocio, decodifica payloads y genera alertas.
+
+INFLUXDB:
+Base de datos de series de tiempo donde se almacenan las variables ambientales.
+
+GRAFANA:
+Plataforma de visualización que muestra dashboards en tiempo real con los datos almacenados en InfluxDB.
+
+CLOUDFLARED:
+Permite el acceso remoto seguro mediante túneles, exponiendo servicios locales sin abrir puertos.
