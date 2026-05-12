@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor WSN · LoRaWAN UDFJC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg:        #0b0f14;
+      --bg2:       #111720;
+      --bg3:       #1a2232;
+      --border:    #1e2d42;
+      --accent:    #00c896;
+      --accent2:   #0084ff;
+      --warn:      #f5a623;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --calera:    #00c896;
+      --turmeque:  #0084ff;
+      --font-mono: 'Space Mono', monospace;
+      --font-body: 'DM Sans', sans-serif;
+      --sidebar:   260px;
+      --header:    56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      height: var(--header);
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 18px; height: 18px; }
+
+    .header-title {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.3;
+    }
+    .header-title strong {
+      display: block;
+      font-size: 0.95rem;
+      color: var(--text);
+      letter-spacing: 0.05em;
+    }
+    .header-title span { color: var(--muted); font-size: 0.72rem; }
+
+    .header-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .pulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ── LAYOUT ── */
+    .app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    aside {
+      width: var(--sidebar);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section {
+      padding: 14px 14px 8px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active {
+      background: var(--bg3);
+      color: var(--text);
+    }
+    .nav-item.active.calera  { border-left-color: var(--calera); }
+    .nav-item.active.turmeque{ border-left-color: var(--turmeque); }
+    .nav-item.active.red     { border-left-color: var(--warn); }
+
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-calera   { background: var(--calera); }
+    .dot-turmeque { background: var(--turmeque); }
+    .dot-warn     { background: var(--warn); }
+    .dot-muted    { background: var(--muted); }
+
+    .nav-label { flex: 1; }
+    .nav-sub {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      padding: 10px 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      font-family: var(--font-mono);
+      letter-spacing: 0.03em;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* ── PANELS ── */
+    .panel { flex: 1; display: none; overflow: hidden; }
+    .panel.active { display: flex; flex-direction: column; }
+
+    /* Mapa */
+    #map-container {
+      flex: 1;
+      position: relative;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Popup del mapa */
+    .leaflet-popup-content-wrapper {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .leaflet-popup-tip { background: var(--bg2); }
+    .popup-title {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+    .popup-id {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      margin-bottom: 10px;
+    }
+    .popup-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .popup-metric {
+      background: var(--bg3);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+    .popup-metric-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+    }
+    .popup-metric-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .popup-metric-value.na { color: var(--muted); font-size: 0.75rem; }
+    .popup-elev {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      margin-bottom: 10px;
+    }
+    .popup-btn {
+      display: block;
+      width: 100%;
+      padding: 7px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-body);
+      text-align: center;
+      transition: opacity 0.15s;
+    }
+    .popup-btn:hover { opacity: 0.85; }
+
+    /* Dashboard iframe */
+    #dash-panel {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+    #dash-panel.active { display: flex; }
+
+    .dash-header {
+      padding: 12px 20px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .dash-header-title {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .dash-header-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .back-btn {
+      padding: 5px 12px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: all 0.15s;
+    }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    #dash-frame {
+      flex: 1;
+      border: none;
+      background: var(--bg);
+    }
+
+    .no-url-msg {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 40px;
+    }
+    .no-url-msg .icon {
+      font-size: 2.5rem;
+      opacity: 0.3;
+    }
+    .no-url-code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 0.75rem;
+      color: var(--accent);
+      max-width: 400px;
+      word-break: break-all;
+      text-align: left;
+      line-height: 1.6;
+    }
+
+    /* Badges de red */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .badge-calera   { background: rgba(0,200,150,0.15); color: var(--calera); }
+    .badge-turmeque { background: rgba(0,132,255,0.15); color: var(--turmeque); }
+    .badge-red      { background: rgba(245,166,35,0.15); color: var(--warn); }
+
+    /* Scrollbar */
+    aside::-webkit-scrollbar { width: 4px; }
+    aside::-webkit-scrollbar-track { background: transparent; }
+    aside::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Leaflet dark override */
+    .leaflet-tile-pane { filter: brightness(0.6) saturate(0.7) hue-rotate(200deg); }
+    .leaflet-control-zoom a {
+      background: var(--bg2) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(11,15,20,0.7) !important;
+      color: var(--muted) !important;
+      font-size: 10px !important;
+    }
+    .leaflet-control-attribution a { color: var(--muted) !important; }
+
+    /* Animación de entrada */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .nav-item { animation: fadeIn 0.3s ease both; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+      <path d="M12 8v4l3 3"/>
+      <circle cx="12" cy="12" r="2" fill="#000"/>
+    </svg>
+  </div>
+  <div class="header-title">
+    <strong>WSN · LORAWAN</strong>
+    <span>Red de Monitoreo Agroclimático · UDFJC</span>
+  </div>
+  <div class="header-status">
+    <div class="pulse"></div>
+    EN VIVO
+  </div>
+</header>
+
+<!-- BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-section">Redes</div>
+
+    <div class="nav-item red active" onclick="selectView('red-calera')" id="nav-red-calera">
+      <div class="nav-dot dot-warn"></div>
+      <div class="nav-label">
+        Red La Calera
+        <div class="nav-sub">4 nodos</div>
+      </div>
+      <span class="badge badge-red">RED</span>
+    </div>
+
+    <div class="nav-item turmeque" onclick="selectView('red-turmeque')" id="nav-red-turmeque">
+      <div class="nav-dot dot-turmeque"></div>
+      <div class="nav-label">
+        Red Turméque
+        <div class="nav-sub">2 nodos</div>
+      </div>
+      <span class="badge badge-turmeque">RED</span>
+    </div>
+
+    <div class="sidebar-section">La Calera · Nodos</div>
+
+    <div class="nav-item calera" onclick="selectView('CALERA1')" id="nav-CALERA1">
+      <div class="nav-dot dot-calera"></div>
+      <div class="nav-label">
+        CALERA 1
+        <div class="nav-sub">nodo-lora-ud-2</div>
+      </div>
+    </div>
+
+    <div class="nav-item calera" onclick="selectView('CALERA2')" id="nav-CALERA2">
+      <div class="nav-dot dot-calera"></div>
+      <div class="nav-label">
+        CALERA 2
+        <div class="nav-sub">nodo-lora-ud-5</div>
+      </div>
+    </div>
+
+    <div class="nav-item calera" onclick="selectView('CALERA3')" id="nav-CALERA3">
+      <div class="nav-dot dot-calera"></div>
+      <div class="nav-label">
+        CALERA 3
+        <div class="nav-sub">nodo-lora-ud-6</div>
+      </div>
+    </div>
+
+    <div class="nav-item calera" onclick="selectView('CALERA4')" id="nav-CALERA4">
+      <div class="nav-dot dot-calera"></div>
+      <div class="nav-label">
+        CALERA 4
+        <div class="nav-sub">nodo-lora-ud-7</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Turméque · Nodos</div>
+
+    <div class="nav-item turmeque" onclick="selectView('TURMEQUE1')" id="nav-TURMEQUE1">
+      <div class="nav-dot dot-turmeque"></div>
+      <div class="nav-label">
+        TURMEQUÉ 1
+        <div class="nav-sub">nodo-lora-ud-1</div>
+      </div>
+    </div>
+
+    <div class="nav-item turmeque" onclick="selectView('TURMEQUE2')" id="nav-TURMEQUE2">
+      <div class="nav-dot dot-turmeque"></div>
+      <div class="nav-label">
+        TURMEQUÉ 2
+        <div class="nav-sub">nodo-lora-ud-4</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <div class="tab active" id="tab-mapa"      onclick="switchTab('mapa')">🗺 Mapa</div>
+      <div class="tab"        id="tab-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</div>
+    </div>
+
+    <!-- PANEL MAPA -->
+    <div class="panel active" id="panel-mapa">
+      <div id="map-container">
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <!-- PANEL DASHBOARD -->
+    <div class="panel" id="panel-dashboard">
+      <div id="dash-panel" class="active">
+        <div class="dash-header">
+          <button class="back-btn" onclick="switchTab('mapa')">← Mapa</button>
+          <div class="dash-header-title" id="dash-title">Red La Calera</div>
+          <div class="dash-header-sub" id="dash-sub">Vista general · 4 nodos</div>
+        </div>
+        <div id="dash-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <!-- Se rellena dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── DATOS DE NODOS ──────────────────────────────────────────────
+const NODOS = {
+  CALERA1:  { nombre: 'CALERA 1',   device: 'nodo-lora-ud-2', lat: 4.722903,  lng: -73.899742, elev: 3217.32, red: 'calera',   anem: true  },
+  CALERA2:  { nombre: 'CALERA 2',   device: 'nodo-lora-ud-5', lat: 4.722264,  lng: -73.899731, elev: 3216.97, red: 'calera',   anem: false },
+  CALERA3:  { nombre: 'CALERA 3',   device: 'nodo-lora-ud-6', lat: 4.723381,  lng: -73.898781, elev: 3231.39, red: 'calera',   anem: false },
+  CALERA4:  { nombre: 'CALERA 4',   device: 'nodo-lora-ud-7', lat: 4.724919,  lng: -73.914233, elev: 3045.43, red: 'calera',   anem: false },
+  TURMEQUE1:{ nombre: 'TURMEQUÉ 1', device: 'nodo-lora-ud-1', lat: 5.259533,  lng: -73.499967, elev: 2954.96, red: 'turmeque', anem: false },
+  TURMEQUE2:{ nombre: 'TURMEQUÉ 2', device: 'nodo-lora-ud-4', lat: 5.259719,  lng: -73.500217, elev: 2951.74, red: 'turmeque', anem: true  },
+};
+
+// ── URLs DE GRAFANA ─────────────────────────────────────────────
+// Reemplaza cada valor con el link público de Grafana
+// Menú de Grafana → Share → Public dashboard → Copy link
+const GRAFANA_BASE = 'https://grafana.lorawannetworksud.com';
+
+const URLS = {
+  'CALERA1':     GRAFANA_BASE + '/public-dashboards/5c81d71f54914fcfa8736fbf7a035824',
+  'CALERA2':     GRAFANA_BASE + '/public-dashboards/2160098e3b594ca99c3774c54c3e72db',
+  'CALERA3':     GRAFANA_BASE + '/public-dashboards/5a99159c9a894024bcd34ba8e57de1e3',
+  'CALERA4':     GRAFANA_BASE + '/public-dashboards/da15ee21e5534d7d8049af2e9d86f510',
+  'TURMEQUE1':   GRAFANA_BASE + '/public-dashboards/5edbd299f2884976af7c23f635bee035',
+  'TURMEQUE2':   GRAFANA_BASE + '/public-dashboards/bb75999416914f2cbc2363e5bc627802',
+  'red-calera':  GRAFANA_BASE + '/public-dashboards/58a50382c5404590bd3e4ff804a8bde0',
+  'red-turmeque':GRAFANA_BASE + '/public-dashboards/af67b1728e084c74aa4c267305204637',
+};
+
+// Datos en tiempo real simulados (reemplazar con llamada a Grafana API o InfluxDB si se desea)
+// Por ahora muestra "—" hasta que se conecten los dashboards
+const LAST_DATA = {
+  CALERA1:   { temp: null, hum: null, bat: null, snr: null, rssi: null, viento: null },
+  CALERA2:   { temp: null, hum: null, bat: null, snr: null, rssi: null, viento: null },
+  CALERA3:   { temp: null, hum: null, bat: null, snr: null, rssi: null, viento: null },
+  CALERA4:   { temp: null, hum: null, bat: null, snr: null, rssi: null, viento: null },
+  TURMEQUE1: { temp: null, hum: null, bat: null, snr: null, rssi: null, viento: null },
+  TURMEQUE2: { temp: null, hum: null, bat: null, snr: null, rssi: null, viento: null },
+};
+
+// ── ESTADO ──────────────────────────────────────────────────────
+let currentView = 'red-calera';
+let currentTab  = 'mapa';
+let map, markers = {};
+
+// ── MAPA ────────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', { zoomControl: true }).setView([4.98, -73.7], 9);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 18,
+  }).addTo(map);
+
+  Object.entries(NODOS).forEach(([id, n]) => {
+    const color = n.red === 'calera' ? '#00c896' : '#0084ff';
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:14px;height:14px;
+        background:${color};
+        border:2px solid #fff;
+        border-radius:50%;
+        box-shadow:0 0 0 3px ${color}44, 0 2px 8px rgba(0,0,0,0.5);
+      "></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+      popupAnchor: [0, -10],
+    });
+
+    const d = LAST_DATA[id];
+    const fmt = (v, u) => v !== null ? `${v}${u}` : '—';
+
+    const popupHtml = `
+      <div style="min-width:200px">
+        <div class="popup-title">${n.nombre}</div>
+        <div class="popup-id">${n.device}</div>
+        <div class="popup-elev">⛰ ${n.elev.toFixed(0)} m.s.n.m · ${n.lat.toFixed(5)}, ${n.lng.toFixed(5)}</div>
+        <div class="popup-metrics">
+          <div class="popup-metric">
+            <div class="popup-metric-label">Temperatura</div>
+            <div class="popup-metric-value">${fmt(d.temp,'°C')}</div>
+          </div>
+          <div class="popup-metric">
+            <div class="popup-metric-label">Humedad</div>
+            <div class="popup-metric-value">${fmt(d.hum,'%')}</div>
+          </div>
+          <div class="popup-metric">
+            <div class="popup-metric-label">Batería</div>
+            <div class="popup-metric-value">${fmt(d.bat,'%')}</div>
+          </div>
+          ${n.anem ? `
+          <div class="popup-metric">
+            <div class="popup-metric-label">Viento</div>
+            <div class="popup-metric-value">${fmt(d.viento,' m/s')}</div>
+          </div>` : `
+          <div class="popup-metric">
+            <div class="popup-metric-label">Viento</div>
+            <div class="popup-metric-value na">Sin sensor</div>
+          </div>`}
+          <div class="popup-metric">
+            <div class="popup-metric-label">SNR</div>
+            <div class="popup-metric-value">${fmt(d.snr,' dB')}</div>
+          </div>
+          <div class="popup-metric">
+            <div class="popup-metric-label">RSSI</div>
+            <div class="popup-metric-value">${fmt(d.rssi,' dBm')}</div>
+          </div>
+        </div>
+        <button class="popup-btn" onclick="abrirDashboard('${id}')">Ver dashboard completo →</button>
+      </div>`;
+
+    const marker = L.marker([n.lat, n.lng], { icon })
+      .bindPopup(popupHtml, { maxWidth: 260 })
+      .addTo(map);
+
+    markers[id] = marker;
+  });
+}
+
+function focusRed(red) {
+  const nodos = Object.entries(NODOS).filter(([,n]) => n.red === red);
+  const bounds = L.latLngBounds(nodos.map(([,n]) => [n.lat, n.lng]));
+  map.fitBounds(bounds, { padding: [60, 60] });
+}
+
+function focusNodo(id) {
+  const n = NODOS[id];
+  map.setView([n.lat, n.lng], 16);
+  setTimeout(() => markers[id].openPopup(), 300);
+}
+
+// ── NAVEGACIÓN ──────────────────────────────────────────────────
+function selectView(id) {
+  currentView = id;
+
+  // Actualizar sidebar activo
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+
+  // Actualizar dash header
+  if (id === 'red-calera') {
+    document.getElementById('dash-title').textContent = 'Red La Calera';
+    document.getElementById('dash-sub').textContent = 'Vista general · 4 nodos';
+  } else if (id === 'red-turmeque') {
+    document.getElementById('dash-title').textContent = 'Red Turméque';
+    document.getElementById('dash-sub').textContent = 'Vista general · 2 nodos';
+  } else {
+    const n = NODOS[id];
+    document.getElementById('dash-title').textContent = n.nombre;
+    document.getElementById('dash-sub').textContent = n.device + (n.anem ? ' · con anemómetro' : '');
+  }
+
+  // Si estamos en mapa, mover cámara
+  if (currentTab === 'mapa') {
+    if (id === 'red-calera')   focusRed('calera');
+    else if (id === 'red-turmeque') focusRed('turmeque');
+    else focusNodo(id);
+  } else {
+    renderDash(id);
+  }
+}
+
+function abrirDashboard(id) {
+  selectView(id);
+  switchTab('dashboard');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+
+  if (tab === 'mapa') {
+    setTimeout(() => map.invalidateSize(), 50);
+    if (currentView === 'red-calera')    focusRed('calera');
+    else if (currentView === 'red-turmeque') focusRed('turmeque');
+    else focusNodo(currentView);
+  } else {
+    renderDash(currentView);
+  }
+}
+
+function renderDash(id) {
+  const url = URLS[id];
+  const container = document.getElementById('dash-content');
+
+  if (!url || url.includes('REEMPLAZAR')) {
+    container.innerHTML = `
+      <div class="no-url-msg">
+        <div class="icon">📊</div>
+        <div>Dashboard pendiente de configurar</div>
+        <div style="font-size:0.75rem;margin-top:4px;">Agrega la URL en el archivo index.html:</div>
+        <div class="no-url-code">'${id}': GRAFANA_BASE + '/d/UID_DEL_DASHBOARD/nombre?orgId=1&kiosk'</div>
+        <div style="font-size:0.72rem;margin-top:8px;color:var(--muted)">
+          En Grafana: abre el dashboard → Share → Copy link
+        </div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `<iframe id="dash-frame" src="${url}" style="flex:1;border:none;width:100%;height:100%;background:var(--bg)"></iframe>`;
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  initMap();
+  focusRed('calera');
+});
+</script>
+</body>
+</html>
