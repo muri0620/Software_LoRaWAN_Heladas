@@ -9,7 +9,7 @@ Stack completo del sistema, con versión y propósito.
 | Microcontrolador | Heltec WiFi LoRa 32 V3 | ESP32-S3 + radio Semtech SX1262 + OLED 128x64 |
 | Sensor temperatura/humedad | DHT22 / AM2305B | Precisión ±0.5 °C, ±2 % HR |
 | Anemómetro | De pulsos (reed switch) | Lectura por interrupción ISR, ventana 3 s |
-| Batería | LiPo 3.7 V | Carga vía panel solar (no incluido en este repo) |
+| Batería | LiPo 3.7 V | Carga vía USB-C + Modulo de carga Heltec LoRa 32 V3 |
 
 ## Comunicación
 
