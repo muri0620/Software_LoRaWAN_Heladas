@@ -1,0 +1,29 @@
+function decodeUplink(input) {
+  const bytes = input.bytes;
+
+  const packet = (bytes[0] << 8) | bytes[1];
+
+  let tempRaw = (bytes[2] << 8) | bytes[3];
+  if (tempRaw & 0x8000) tempRaw -= 0x10000;
+  const temperature = tempRaw / 100.0;
+
+  const humidity = ((bytes[4] << 8) | bytes[5]) / 100.0;
+  const battery = ((bytes[6] << 8) | bytes[7]) / 100.0;
+
+  let wind = null;
+
+  // Si el paquete tiene 10 bytes, entonces trae viento
+  if (bytes.length >= 10) {
+    wind = ((bytes[8] << 8) | bytes[9]) / 100.0;
+  }
+
+  return {
+    data: {
+      packet: packet,
+      temperature: temperature,
+      humidity: humidity,
+      battery: battery,
+      wind_speed: wind
+    }
+  };
+}

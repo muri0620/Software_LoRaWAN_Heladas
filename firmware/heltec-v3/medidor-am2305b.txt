@@ -1,0 +1,47 @@
+#include <heltec_unofficial.h>
+#include "DHT.h"
+
+// pines y tipo
+#define DHTPIN 46 
+#define DHTTYPE DHT22  //protocolo sensor 
+
+DHT dht(DHTPIN, DHTTYPE);
+
+float temperatura = 0;
+float humedad     = 0;
+//float viento      = 0;
+
+void setup() {
+  heltec_setup();  //inicializar oled 
+  display.setFont(ArialMT_Plain_10); 
+  dht.begin();
+  Serial.begin(115200);
+}
+
+void loop() {
+ 
+  temperatura = dht.readTemperature();
+  humedad     = dht.readHumidity();
+
+  //error de lectura
+  if (isnan(temperatura) || isnan(humedad)) {
+    Serial.println("Error leyendo AM2305B");
+    display.cls();
+    display.println("Error en sensor AM2305");
+    delay(2000);
+    return;
+  }
+
+
+ // Serial.printf("Temp: %.1f C | Hum: %.1f %% | Viento: %.2f m/s\n", temperatura, humedad, viento);
+  Serial.printf("Temp: %.1f C | Hum: %.1f %% \n", temperatura, humedad);
+
+
+  display.cls();
+  display.println("WSN LPWAN UDFJDC");
+  display.println("SENSOR AM2305B");
+  display.printf("Temp: %.1f C\n", temperatura);
+  display.printf("Hum: %.1f %%\n", humedad);
+
+  delay(1000); 
+}

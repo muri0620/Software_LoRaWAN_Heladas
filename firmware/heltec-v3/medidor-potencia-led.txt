@@ -1,0 +1,86 @@
+#include <heltec_unofficial.h>
+#include <LoRaWAN_ESP32.h>
+
+#define PRG_BUTTON 0        // Botón PRG
+#define TX_POWER_DBM 22     // Potencia fija
+#define LED_PIN 35          // LED Heltec V3
+
+LoRaWANNode* node;
+
+void setup() {
+
+  Serial.begin(115200);
+  delay(1000);
+
+  pinMode(PRG_BUTTON, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  heltec_setup();   // radio
+
+  Serial.println("Iniciando nodo LoRaWAN...");
+
+  int16_t state = radio.begin();
+  if (state != RADIOLIB_ERR_NONE) {
+    Serial.println("Error inicializando radio");
+    while (true);
+  }
+
+  radio.setOutputPower(TX_POWER_DBM);
+
+  node = persist.manage(&radio);
+
+  if (!node->isActivated()) {
+    Serial.println("No unido a red LoRaWAN");
+    while (true);
+  }
+
+  Serial.println("Nodo listo. Presiona PRG para enviar.");
+}
+
+void loop() {
+
+  static bool lastButtonState = HIGH;
+  bool currentButtonState = digitalRead(PRG_BUTTON);
+
+  // Detectar flanco de bajada (cuando presionas)
+  if (lastButtonState == HIGH && currentButtonState == LOW) {
+
+    Serial.println("\n----- Enviando datos -----");
+
+    // Datos random
+    uint8_t payload[3];
+    payload[0] = random(15, 30);  // Temperatura
+    payload[1] = random(40, 90);  // Humedad
+    payload[2] = random(0, 15);   // Viento
+
+    Serial.print("Temperatura: ");
+    Serial.println(payload[0]);
+    Serial.print("Humedad: ");
+    Serial.println(payload[1]);
+    Serial.print("Viento: ");
+    Serial.println(payload[2]);
+    Serial.print("Potencia TX: ");
+    Serial.print(TX_POWER_DBM);
+    Serial.println(" dBm");
+
+    uint8_t downlink[10];
+    size_t lenDown = sizeof(downlink);
+
+    int16_t state = node->sendReceive(payload, sizeof(payload), 1, downlink, &lenDown);
+
+    if (state == RADIOLIB_ERR_NONE) {
+      Serial.println("Envio OK");
+      digitalWrite(LED_PIN, HIGH);
+      delay(500);
+      digitalWrite(LED_PIN, LOW);
+    } else {
+      Serial.print("Envio Fallo. Error: ");
+      Serial.println(state);
+    }
+
+    Serial.println("--------------------------");
+  }
+
+  lastButtonState = currentButtonState;
+}

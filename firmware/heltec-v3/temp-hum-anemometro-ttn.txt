@@ -1,0 +1,172 @@
+#define MINIMUM_DELAY 900  // 15 minutos
+#include <heltec_unofficial.h>
+#include <LoRaWAN_ESP32.h>
+#include "DHT.h"
+
+// === Pines ===
+#define DHTPIN   46
+#define DHTTYPE  DHT22
+#define WIND_PIN 47
+#define VBAT_PIN 1   // GPIO para lectura de batería
+
+const int RecordTime = 3;  // segundos de medición de viento
+
+//Variables anemómetro
+volatile int           pulseCount        = 0;
+volatile unsigned long lastInterruptTime = 0;
+portMUX_TYPE           mux               = portMUX_INITIALIZER_UNLOCKED;
+
+DHT dht(DHTPIN, DHTTYPE);
+LoRaWANNode* node;
+
+// Contadores persistentes en RTC (sobreviven deep sleep)
+RTC_DATA_ATTR uint16_t packetCount = 0;
+
+//ISR anemómetro
+void IRAM_ATTR countPulse() {
+  unsigned long now = millis();
+  if (now - lastInterruptTime > 10) {   // filtro anti-rebote 10 ms
+    portENTER_CRITICAL_ISR(&mux);
+    pulseCount++;
+    lastInterruptTime = now;            // ahora protegido por el mutex
+    portEXIT_CRITICAL_ISR(&mux);
+  }
+}
+
+// Medición viento (m/s)
+float leerViento() {
+  portENTER_CRITICAL(&mux);
+  pulseCount        = 0;
+  lastInterruptTime = 0;
+  portEXIT_CRITICAL(&mux);
+
+  attachInterrupt(digitalPinToInterrupt(WIND_PIN), countPulse, CHANGE);
+  delay(RecordTime * 1000);
+  detachInterrupt(digitalPinToInterrupt(WIND_PIN));
+
+
+  int pulsos;
+  portENTER_CRITICAL(&mux);
+  pulsos = pulseCount;
+  portEXIT_CRITICAL(&mux);
+
+  float revPerSec = (float)pulsos / (float)RecordTime;
+  float kmh       = revPerSec * 2.4f;
+  float ms        = kmh / 3.6f;
+
+  // validar resultado
+  if (isnan(ms) || ms < 0.0f) ms = 0.0f;
+
+  return ms;
+}
+
+void setup() {
+  heltec_setup();
+  display.setFont(ArialMT_Plain_10);
+  Serial.begin(115200);
+
+  //Sensor DHT
+  dht.begin();
+  delay(2000);  //warm-up DHT22
+
+  //ADC batería
+  analogReadResolution(12);
+  pinMode(37, OUTPUT);
+  digitalWrite(37, HIGH);
+
+  pinMode(WIND_PIN, INPUT_PULLUP);
+
+  // Radio 
+  if (radio.begin() != RADIOLIB_ERR_NONE) {
+    showError("Error radio");
+    goToSleep();
+  }
+
+  node = persist.manage(&radio);
+
+  if (!node->isActivated()) {
+    showError("No unido a red");
+    goToSleep();
+  }
+
+  node->setDutyCycle(true, 1250);
+
+  // Sensores
+  float temperatura = dht.readTemperature();
+  float humedad     = dht.readHumidity();
+  float viento      = leerViento();
+
+  if (isnan(temperatura) || isnan(humedad)) {
+    showError("Error sensor");
+    goToSleep();
+  }
+
+  // Bateria
+  int   adc_mV = analogReadMilliVolts(VBAT_PIN);
+  float vbat   = (adc_mV * 4.9f) / 1000.0f;
+
+  packetCount++;
+
+  Serial.printf(
+    "T: %.2f C | H: %.2f %% | Viento: %.2f m/s | Batt: %.2f V | Pkt: %u\n",
+    temperatura, humedad, viento, vbat, packetCount
+  );
+
+  // OLED
+  display.cls();
+  display.println("WSN LPWAN UDFJDC");
+  display.printf("Temp: %.2f C\n",      temperatura);
+  display.printf("Hum: %.2f %%\n",      humedad);
+  display.printf("Viento: %.2f m/s\n",  viento);
+  display.printf("Batt: %.2f V\n",      vbat);
+  display.printf("Pkt: %u\n",           packetCount);
+  delay(6000);
+
+  //PAYLOAD (10 bytes)
+  uint8_t uplinkData[10];
+
+  uplinkData[0] = (packetCount >> 8) & 0xFF;
+  uplinkData[1] =  packetCount       & 0xFF;
+
+  int16_t  t = (int16_t)(temperatura * 100);
+  uint16_t h = (uint16_t)(humedad    * 100);
+  uint16_t b = (uint16_t)(vbat       * 100);
+  uint16_t w = (uint16_t)(viento     * 100);
+
+  uplinkData[2] = (t >> 8) & 0xFF;
+  uplinkData[3] =  t       & 0xFF;
+  uplinkData[4] = (h >> 8) & 0xFF;
+  uplinkData[5] =  h       & 0xFF;
+  uplinkData[6] = (b >> 8) & 0xFF;
+  uplinkData[7] =  b       & 0xFF;
+  uplinkData[8] = (w >> 8) & 0xFF;
+  uplinkData[9] =  w       & 0xFF;
+
+  uint8_t downlinkData[256];
+  size_t  lenDown = sizeof(downlinkData);
+
+  node->sendReceive(uplinkData, sizeof(uplinkData), 1, downlinkData, &lenDown);
+
+  goToSleep();
+}
+
+void loop() {}
+
+void showError(const char* msg) {
+  display.cls();
+  display.println("Error:");
+  display.println(msg);
+  delay(2000);
+}
+
+void goToSleep() {
+  Serial.println("Deep sleep");
+  persist.saveSession(node);
+
+  uint32_t interval = node->timeUntilUplink();
+  uint32_t delayMs  = max(interval, (uint32_t)(MINIMUM_DELAY * 1000UL));
+
+  Serial.printf("Next TX in %u s\n", delayMs / 1000);
+  delay(100);
+  heltec_deep_sleep(delayMs / 1000);
+}
